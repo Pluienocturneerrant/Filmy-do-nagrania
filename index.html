@@ -26,7 +26,46 @@
         
         h1 {
             font-size: 2rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .sync-info {
+            background: #1e40af;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .sync-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .sync-btn {
+            padding: 0.5rem 1rem;
+            background: #2563eb;
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .sync-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .sync-btn.danger {
+            background: #dc2626;
+        }
+
+        .sync-btn.danger:hover {
+            background: #b91c1c;
         }
         
         .stats {
@@ -210,12 +249,20 @@
             color: #fca5a5;
         }
         
-        .error-message {
-            background: #dc2626;
-            color: white;
+        .success-message, .error-message {
             padding: 1rem;
             border-radius: 0.5rem;
             margin-bottom: 1rem;
+        }
+
+        .success-message {
+            background: #16a34a;
+            color: white;
+        }
+        
+        .error-message {
+            background: #dc2626;
+            color: white;
         }
         
         .no-results {
@@ -228,6 +275,55 @@
             text-align: center;
             font-size: 1.25rem;
             padding: 3rem 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1f2937;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal textarea {
+            width: 100%;
+            height: 200px;
+            background: #374151;
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            padding: 0.75rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.5rem;
         }
 
         @media (min-width: 640px) {
@@ -243,7 +339,18 @@
 <body>
     <div class="container">
         <h1>Baza filmów do nagrania</h1>
+
+        <div class="sync-info">
+            💾 Dane zapisują się automatycznie w przeglądarce. Użyj eksportu/importu do synchronizacji między urządzeniami.
+        </div>
+
+        <div class="sync-buttons">
+            <button class="sync-btn" onclick="exportData()">📤 Eksportuj dane</button>
+            <button class="sync-btn" onclick="showImportModal()">📥 Importuj dane</button>
+            <button class="sync-btn danger" onclick="resetData()">🔄 Reset do stanu początkowego</button>
+        </div>
         
+        <div id="success" class="success-message" style="display: none;"></div>
         <div id="error" class="error-message" style="display: none;"></div>
         
         <div class="stats">
@@ -269,7 +376,21 @@
         </div>
     </div>
 
+    <!-- Modal importu -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Importuj dane</div>
+            <textarea id="import-textarea" placeholder="Wklej tutaj wyeksportowane dane..."></textarea>
+            <div class="modal-buttons">
+                <button class="btn btn-save" onclick="importData()">Importuj</button>
+                <button class="btn btn-cancel" onclick="hideImportModal()">Anuluj</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        const STORAGE_KEY = 'films-data-v1';
+
         const initialData = {
             18: "Teatr telewizji",
             23: "Cień",
@@ -324,21 +445,17 @@
             allNumbers.push(i);
         }
 
-        async function loadData() {
+        function loadData() {
             try {
-                if (window.storage) {
-                    const result = await window.storage.get('films-data');
-                    if (result && result.value) {
-                        films = JSON.parse(result.value);
-                    } else {
-                        films = { ...initialData };
-                        await window.storage.set('films-data', JSON.stringify(films));
-                    }
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    films = JSON.parse(saved);
                 } else {
                     films = { ...initialData };
+                    saveToStorage();
                 }
             } catch (err) {
-                console.log('Storage error, using initial data:', err);
+                console.error('Error loading data:', err);
                 films = { ...initialData };
             }
             document.getElementById('loading').style.display = 'none';
@@ -346,14 +463,21 @@
             render();
         }
 
-        async function saveData() {
+        function saveToStorage() {
             try {
-                if (window.storage) {
-                    await window.storage.set('films-data', JSON.stringify(films));
-                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(films));
             } catch (err) {
-                showError('Nie udało się zapisać. Zmiany będą tymczasowe.');
+                showError('Błąd zapisu: ' + err.message);
             }
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('success');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 3000);
         }
 
         function showError(message) {
@@ -450,20 +574,68 @@
             render();
         }
 
-        async function saveEdit(num) {
+        function saveEdit(num) {
             const input = document.getElementById(`edit-input-${num}`);
             if (input) {
                 films[num] = input.value.trim();
-                await saveData();
+                saveToStorage();
+                showSuccess('Zapisano!');
             }
             editingId = null;
             render();
         }
 
-        async function deleteFilm(num) {
-            delete films[num];
-            await saveData();
-            render();
+        function deleteFilm(num) {
+            if (confirm('Czy na pewno usunąć ten film?')) {
+                delete films[num];
+                saveToStorage();
+                showSuccess('Usunięto!');
+                render();
+            }
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(films, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'baza-filmow-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showSuccess('Dane wyeksportowane!');
+        }
+
+        function showImportModal() {
+            document.getElementById('import-modal').classList.add('active');
+        }
+
+        function hideImportModal() {
+            document.getElementById('import-modal').classList.remove('active');
+            document.getElementById('import-textarea').value = '';
+        }
+
+        function importData() {
+            try {
+                const data = document.getElementById('import-textarea').value;
+                const parsed = JSON.parse(data);
+                films = parsed;
+                saveToStorage();
+                hideImportModal();
+                render();
+                showSuccess('Dane zaimportowane!');
+            } catch (err) {
+                showError('Błąd importu: nieprawidłowy format danych');
+            }
+        }
+
+        function resetData() {
+            if (confirm('Czy na pewno zresetować bazę do stanu początkowego? Wszystkie zmiany zostaną utracone!')) {
+                films = { ...initialData };
+                saveToStorage();
+                render();
+                showSuccess('Baza zresetowana!');
+            }
         }
 
         document.getElementById('search').addEventListener('input', (e) => {

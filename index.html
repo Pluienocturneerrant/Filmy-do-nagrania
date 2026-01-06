@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baza filmów do nagrania</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Georgia, serif;
+            background: #111827;
+            color: white;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1024px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stats {
+            background: #1f2937;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+        }
+        
+        .blue { color: #60a5fa; }
+        .yellow { color: #fbbf24; }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: #1f2937;
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 1rem;
+            font-family: Georgia, serif;
+        }
+        
+        .search-box input::placeholder {
+            color: #9ca3af;
+        }
+        
+        .search-box input:focus {
+            outline: 2px solid #3b82f6;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        
+        .film-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .film-item {
+            background: #1f2937;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .film-item.empty {
+            border: 2px dashed #fbbf24;
+        }
+        
+        .film-content {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+        
+        .film-number {
+            width: 3.5rem;
+            height: 3.5rem;
+            background: #2563eb;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.125rem;
+            flex-shrink: 0;
+        }
+        
+        .film-title-container {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        
+        .film-title {
+            font-size: 1.125rem;
+            padding: 0.5rem;
+            margin: -0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            word-wrap: break-word;
+        }
+        
+        .film-title:hover {
+            background: #374151;
+        }
+        
+        .film-title.empty {
+            color: #fbbf24;
+            font-style: italic;
+        }
+        
+        .film-edit input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background: #374151;
+            border: none;
+            border-radius: 0.25rem;
+            color: white;
+            font-size: 1rem;
+            font-family: Georgia, serif;
+            margin-bottom: 0.5rem;
+        }
+        
+        .film-edit input:focus {
+            outline: 2px solid #3b82f6;
+        }
+        
+        .film-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: Georgia, serif;
+        }
+        
+        .btn-save {
+            background: #16a34a;
+            color: white;
+        }
+        
+        .btn-save:hover {
+            background: #15803d;
+        }
+        
+        .btn-cancel {
+            background: #4b5563;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #374151;
+        }
+        
+        .btn-delete {
+            flex-shrink: 0;
+            padding: 0.75rem;
+            background: transparent;
+            border: none;
+            color: #f87171;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+        }
+        
+        .btn-delete:hover {
+            background: #374151;
+            color: #fca5a5;
+        }
+        
+        .error-message {
+            background: #dc2626;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .no-results {
+            text-align: center;
+            color: #9ca3af;
+            padding: 3rem 0;
+        }
+        
+        .loading {
+            text-align: center;
+            font-size: 1.25rem;
+            padding: 3rem 0;
+        }
+
+        @media (min-width: 640px) {
+            body {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Baza filmów do nagrania</h1>
+        
+        <div id="error" class="error-message" style="display: none;"></div>
+        
+        <div class="stats">
+            <div>
+                <div class="stat-value blue" id="recorded-count">0</div>
+                <div class="stat-label">Nagranych</div>
+            </div>
+            <div>
+                <div class="stat-value yellow" id="empty-count">0</div>
+                <div class="stat-label">Pustych pól</div>
+            </div>
+        </div>
+        
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search" placeholder="Szukaj po tytule lub numerze...">
+        </div>
+        
+        <div id="loading" class="loading">Ładowanie...</div>
+        <div id="film-list" class="film-list" style="display: none;"></div>
+        <div id="no-results" class="no-results" style="display: none;">
+            Nie znaleziono filmów pasujących do wyszukiwania
+        </div>
+    </div>
+
+    <script>
+        const initialData = {
+            18: "Teatr telewizji",
+            23: "Cień",
+            28: "Światła rampy",
+            33: "Ciotka Hitlera",
+            38: "Mistrz i Małgorzata",
+            43: "Who",
+            48: "Hokusa",
+            53: "La brea",
+            58: "Exodus",
+            63: "Mayfair",
+            68: "Obcy pasażer",
+            73: "Mauretańczyk",
+            78: "Elżbieta",
+            83: "Elżbiety",
+            88: "Królowa",
+            93: "Daniel Blake",
+            98: "Arras",
+            103: "Akwizytorom dziekujemy",
+            108: "Saga",
+            113: "Królewska gra",
+            118: "Trzynaście dni",
+            123: "Odwróceni zakochani",
+            128: "Medium",
+            133: "Bastion",
+            138: "",
+            143: "Rok z Salingerem",
+            148: "Pan od muzyki",
+            153: "",
+            158: "Ale z naszymi",
+            163: "Lucy wśród gwiazd",
+            168: "",
+            173: "",
+            178: "Weekend z królem",
+            183: "Jessebele",
+            188: "Człowiek przyszłości",
+            193: "",
+            198: "Dzieci z jedwabnego",
+            203: "",
+            208: "",
+            213: "",
+            218: "",
+            223: ""
+        };
+
+        let films = {};
+        let editingId = null;
+        let searchTerm = '';
+
+        const allNumbers = [];
+        for (let i = 18; i <= 223; i += 5) {
+            allNumbers.push(i);
+        }
+
+        async function loadData() {
+            try {
+                if (window.storage) {
+                    const result = await window.storage.get('films-data');
+                    if (result && result.value) {
+                        films = JSON.parse(result.value);
+                    } else {
+                        films = { ...initialData };
+                        await window.storage.set('films-data', JSON.stringify(films));
+                    }
+                } else {
+                    films = { ...initialData };
+                }
+            } catch (err) {
+                console.log('Storage error, using initial data:', err);
+                films = { ...initialData };
+            }
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('film-list').style.display = 'flex';
+            render();
+        }
+
+        async function saveData() {
+            try {
+                if (window.storage) {
+                    await window.storage.set('films-data', JSON.stringify(films));
+                }
+            } catch (err) {
+                showError('Nie udało się zapisać. Zmiany będą tymczasowe.');
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateStats() {
+            const recorded = Object.keys(films).filter(k => films[k] && films[k].trim()).length;
+            const empty = allNumbers.filter(num => !films[num] || films[num].trim() === '').length;
+            document.getElementById('recorded-count').textContent = recorded;
+            document.getElementById('empty-count').textContent = empty;
+        }
+
+        function getFilteredNumbers() {
+            return allNumbers.filter(num => {
+                const title = films[num] || '';
+                return title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       num.toString().includes(searchTerm);
+            });
+        }
+
+        function render() {
+            updateStats();
+            const filtered = getFilteredNumbers();
+            const listEl = document.getElementById('film-list');
+            const noResultsEl = document.getElementById('no-results');
+
+            if (filtered.length === 0) {
+                listEl.style.display = 'none';
+                noResultsEl.style.display = 'block';
+                return;
+            }
+
+            listEl.style.display = 'flex';
+            noResultsEl.style.display = 'none';
+
+            listEl.innerHTML = filtered.map(num => {
+                const title = films[num] || '';
+                const isEmpty = !title || title.trim() === '';
+                const isEditing = editingId === num;
+
+                if (isEditing) {
+                    return `
+                        <div class="film-item ${isEmpty ? 'empty' : ''}">
+                            <div class="film-content">
+                                <div class="film-number">${num}</div>
+                                <div class="film-title-container">
+                                    <div class="film-edit">
+                                        <input type="text" id="edit-input-${num}" value="${title}" placeholder="Wpisz tytuł filmu...">
+                                        <div class="film-buttons">
+                                            <button class="btn btn-save" onclick="saveEdit(${num})">Zapisz</button>
+                                            <button class="btn btn-cancel" onclick="cancelEdit()">Anuluj</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="film-item ${isEmpty ? 'empty' : ''}">
+                        <div class="film-content">
+                            <div class="film-number">${num}</div>
+                            <div class="film-title-container">
+                                <div class="film-title ${isEmpty ? 'empty' : ''}" onclick="startEdit(${num})">
+                                    ${isEmpty ? 'Kliknij aby dodać tytuł...' : title}
+                                </div>
+                            </div>
+                            ${!isEmpty ? `<button class="btn-delete" onclick="deleteFilm(${num})">🗑️</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (isEditing) {
+                const input = document.getElementById(`edit-input-${editingId}`);
+                if (input) input.focus();
+            }
+        }
+
+        function startEdit(num) {
+            editingId = num;
+            render();
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            render();
+        }
+
+        async function saveEdit(num) {
+            const input = document.getElementById(`edit-input-${num}`);
+            if (input) {
+                films[num] = input.value.trim();
+                await saveData();
+            }
+            editingId = null;
+            render();
+        }
+
+        async function deleteFilm(num) {
+            delete films[num];
+            await saveData();
+            render();
+        }
+
+        document.getElementById('search').addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            render();
+        });
+
+        loadData();
+    </script>
+</body>
+</html>

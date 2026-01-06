@@ -62,6 +62,8 @@
 
         .sync-btn.danger {
             background: #dc2626;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.75rem;
         }
 
         .sync-btn.danger:hover {
@@ -345,9 +347,11 @@
         </div>
 
         <div class="sync-buttons">
-            <button class="sync-btn" onclick="exportData()">📤 Eksportuj dane</button>
+            <button class="sync-btn" onclick="sendEmail()">📧 Wyślij emailem</button>
+            <button class="sync-btn" onclick="copyToClipboard()">📋 Skopiuj dane</button>
+            <button class="sync-btn" onclick="exportData()">📤 Pobierz plik</button>
             <button class="sync-btn" onclick="showImportModal()">📥 Importuj dane</button>
-            <button class="sync-btn danger" onclick="resetData()">🔄 Reset do stanu początkowego</button>
+            <button class="sync-btn danger small" onclick="resetData()" style="margin-left: auto;">⚠️ Reset</button>
         </div>
         
         <div id="success" class="success-message" style="display: none;"></div>
@@ -603,7 +607,25 @@
             a.download = 'baza-filmow-' + new Date().toISOString().split('T')[0] + '.json';
             a.click();
             URL.revokeObjectURL(url);
-            showSuccess('Dane wyeksportowane!');
+            showSuccess('Plik pobrany!');
+        }
+
+        function sendEmail() {
+            const dataStr = JSON.stringify(films, null, 2);
+            const subject = encodeURIComponent('Baza filmów - synchronizacja');
+            const body = encodeURIComponent('Dane do importu:\n\n' + dataStr);
+            const mailtoLink = `mailto:vihmasajuoorander@gmail.com?subject=${subject}&body=${body}`;
+            window.location.href = mailtoLink;
+            showSuccess('Otwieranie klienta email...');
+        }
+
+        function copyToClipboard() {
+            const dataStr = JSON.stringify(films, null, 2);
+            navigator.clipboard.writeText(dataStr).then(() => {
+                showSuccess('Dane skopiowane do schowka!');
+            }).catch(err => {
+                showError('Błąd kopiowania: ' + err.message);
+            });
         }
 
         function showImportModal() {
@@ -630,11 +652,11 @@
         }
 
         function resetData() {
-            if (confirm('Czy na pewno zresetować bazę do stanu początkowego? Wszystkie zmiany zostaną utracone!')) {
+            if (confirm('⚠️ UWAGA! Czy na pewno zresetować bazę do stanu początkowego?\n\nWszystkie Twoje zmiany zostaną bezpowrotnie utracone!\n\nJeśli chcesz zachować dane, najpierw je wyeksportuj.')) {
                 films = { ...initialData };
                 saveToStorage();
                 render();
-                showSuccess('Baza zresetowana!');
+                showSuccess('Baza zresetowana do stanu początkowego');
             }
         }
 

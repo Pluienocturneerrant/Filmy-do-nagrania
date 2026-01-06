@@ -613,7 +613,7 @@
         function sendEmail() {
             const dataStr = JSON.stringify(films, null, 2);
             const subject = encodeURIComponent('Baza filmów - synchronizacja');
-            const body = encodeURIComponent('Dane do importu:\n\n' + dataStr);
+            const body = encodeURIComponent(dataStr);
             const mailtoLink = `mailto:vihmasajuoorander@gmail.com?subject=${subject}&body=${body}`;
             window.location.href = mailtoLink;
             showSuccess('Otwieranie klienta email...');

@@ -250,6 +250,40 @@
             background: #374151;
             color: #fca5a5;
         }
+
+        .checkbox-container {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: #374151;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-container:hover {
+            background: #4b5563;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 1.5rem;
+            height: 1.5rem;
+            cursor: pointer;
+            accent-color: #16a34a;
+        }
+
+        .checkbox-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            white-space: nowrap;
+        }
+
+        .checkbox-container.checked .checkbox-label {
+            color: #4ade80;
+            font-weight: 600;
+        }
         
         .success-message, .error-message {
             padding: 1rem;
@@ -396,48 +430,48 @@
         const STORAGE_KEY = 'films-data-v1';
 
         const initialData = {
-            18: "Teatr telewizji",
-            23: "Cień",
-            28: "Światła rampy",
-            33: "Ciotka Hitlera",
-            38: "Mistrz i Małgorzata",
-            43: "Who",
-            48: "Hokusa",
-            53: "La brea",
-            58: "Exodus",
-            63: "Mayfair",
-            68: "Obcy pasażer",
-            73: "Mauretańczyk",
-            78: "Elżbieta",
-            83: "Elżbiety",
-            88: "Królowa",
-            93: "Daniel Blake",
-            98: "Arras",
-            103: "Akwizytorom dziekujemy",
-            108: "Saga",
-            113: "Królewska gra",
-            118: "Trzynaście dni",
-            123: "Odwróceni zakochani",
-            128: "Medium",
-            133: "Bastion",
-            138: "",
-            143: "Rok z Salingerem",
-            148: "Pan od muzyki",
-            153: "",
-            158: "Ale z naszymi",
-            163: "Lucy wśród gwiazd",
-            168: "",
-            173: "",
-            178: "Weekend z królem",
-            183: "Jessebele",
-            188: "Człowiek przyszłości",
-            193: "",
-            198: "Dzieci z jedwabnego",
-            203: "",
-            208: "",
-            213: "",
-            218: "",
-            223: ""
+            18: { title: "Teatr telewizji", firstCopy: false },
+            23: { title: "Cień", firstCopy: false },
+            28: { title: "Światła rampy", firstCopy: false },
+            33: { title: "Ciotka Hitlera", firstCopy: false },
+            38: { title: "Mistrz i Małgorzata", firstCopy: false },
+            43: { title: "Who", firstCopy: false },
+            48: { title: "Hokusa", firstCopy: false },
+            53: { title: "La brea", firstCopy: false },
+            58: { title: "Exodus", firstCopy: false },
+            63: { title: "Mayfair", firstCopy: false },
+            68: { title: "Obcy pasażer", firstCopy: false },
+            73: { title: "Mauretańczyk", firstCopy: false },
+            78: { title: "Elżbieta", firstCopy: false },
+            83: { title: "Elżbiety", firstCopy: false },
+            88: { title: "Królowa", firstCopy: false },
+            93: { title: "Daniel Blake", firstCopy: false },
+            98: { title: "Arras", firstCopy: false },
+            103: { title: "Akwizytorom dziekujemy", firstCopy: false },
+            108: { title: "Saga", firstCopy: false },
+            113: { title: "Królewska gra", firstCopy: false },
+            118: { title: "Trzynaście dni", firstCopy: false },
+            123: { title: "Odwróceni zakochani", firstCopy: false },
+            128: { title: "Medium", firstCopy: false },
+            133: { title: "Bastion", firstCopy: false },
+            138: { title: "", firstCopy: false },
+            143: { title: "Rok z Salingerem", firstCopy: false },
+            148: { title: "Pan od muzyki", firstCopy: false },
+            153: { title: "", firstCopy: false },
+            158: { title: "Ale z naszymi", firstCopy: false },
+            163: { title: "Lucy wśród gwiazd", firstCopy: false },
+            168: { title: "", firstCopy: false },
+            173: { title: "", firstCopy: false },
+            178: { title: "Weekend z królem", firstCopy: false },
+            183: { title: "Jessebele", firstCopy: false },
+            188: { title: "Człowiek przyszłości", firstCopy: false },
+            193: { title: "", firstCopy: false },
+            198: { title: "Dzieci z jedwabnego", firstCopy: false },
+            203: { title: "", firstCopy: false },
+            208: { title: "", firstCopy: false },
+            213: { title: "", firstCopy: false },
+            218: { title: "", firstCopy: false },
+            223: { title: "", firstCopy: false }
         };
 
         let films = {};
@@ -453,14 +487,23 @@
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
                 if (saved) {
-                    films = JSON.parse(saved);
+                    const parsed = JSON.parse(saved);
+                    // Migracja starych danych (string) do nowego formatu (object)
+                    films = {};
+                    for (let key in parsed) {
+                        if (typeof parsed[key] === 'string') {
+                            films[key] = { title: parsed[key], firstCopy: false };
+                        } else {
+                            films[key] = parsed[key];
+                        }
+                    }
                 } else {
-                    films = { ...initialData };
+                    films = JSON.parse(JSON.stringify(initialData));
                     saveToStorage();
                 }
             } catch (err) {
                 console.error('Error loading data:', err);
-                films = { ...initialData };
+                films = JSON.parse(JSON.stringify(initialData));
             }
             document.getElementById('loading').style.display = 'none';
             document.getElementById('film-list').style.display = 'flex';
@@ -494,15 +537,22 @@
         }
 
         function updateStats() {
-            const recorded = Object.keys(films).filter(k => films[k] && films[k].trim()).length;
-            const empty = allNumbers.filter(num => !films[num] || films[num].trim() === '').length;
+            const recorded = Object.keys(films).filter(k => {
+                const film = films[k];
+                return film && film.title && film.title.trim();
+            }).length;
+            const empty = allNumbers.filter(num => {
+                const film = films[num];
+                return !film || !film.title || film.title.trim() === '';
+            }).length;
             document.getElementById('recorded-count').textContent = recorded;
             document.getElementById('empty-count').textContent = empty;
         }
 
         function getFilteredNumbers() {
             return allNumbers.filter(num => {
-                const title = films[num] || '';
+                const film = films[num];
+                const title = film?.title || '';
                 return title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        num.toString().includes(searchTerm);
             });
@@ -524,7 +574,9 @@
             noResultsEl.style.display = 'none';
 
             listEl.innerHTML = filtered.map(num => {
-                const title = films[num] || '';
+                const film = films[num] || { title: '', firstCopy: false };
+                const title = film.title || '';
+                const firstCopy = film.firstCopy || false;
                 const isEmpty = !title || title.trim() === '';
                 const isEditing = editingId === num;
 
@@ -556,6 +608,12 @@
                                     ${isEmpty ? 'Kliknij aby dodać tytuł...' : title}
                                 </div>
                             </div>
+                            ${!isEmpty ? `
+                                <label class="checkbox-container ${firstCopy ? 'checked' : ''}" onclick="event.stopPropagation()">
+                                    <input type="checkbox" ${firstCopy ? 'checked' : ''} onchange="toggleFirstCopy(${num})">
+                                    <span class="checkbox-label">1× nagr.</span>
+                                </label>
+                            ` : ''}
                             ${!isEmpty ? `<button class="btn-delete" onclick="deleteFilm(${num})">🗑️</button>` : ''}
                         </div>
                     </div>
@@ -581,7 +639,11 @@
         function saveEdit(num) {
             const input = document.getElementById(`edit-input-${num}`);
             if (input) {
-                films[num] = input.value.trim();
+                const existingFilm = films[num] || { firstCopy: false };
+                films[num] = {
+                    title: input.value.trim(),
+                    firstCopy: existingFilm.firstCopy || false
+                };
                 saveToStorage();
                 showSuccess('Zapisano!');
             }
@@ -589,9 +651,17 @@
             render();
         }
 
+        function toggleFirstCopy(num) {
+            if (films[num]) {
+                films[num].firstCopy = !films[num].firstCopy;
+                saveToStorage();
+                render();
+            }
+        }
+
         function deleteFilm(num) {
             if (confirm('Czy na pewno usunąć ten film?')) {
-                delete films[num];
+                films[num] = { title: '', firstCopy: false };
                 saveToStorage();
                 showSuccess('Usunięto!');
                 render();
@@ -653,7 +723,7 @@
 
         function resetData() {
             if (confirm('⚠️ UWAGA! Czy na pewno zresetować bazę do stanu początkowego?\n\nWszystkie Twoje zmiany zostaną bezpowrotnie utracone!\n\nJeśli chcesz zachować dane, najpierw je wyeksportuj.')) {
-                films = { ...initialData };
+                films = JSON.parse(JSON.stringify(initialData));
                 saveToStorage();
                 render();
                 showSuccess('Baza zresetowana do stanu początkowego');

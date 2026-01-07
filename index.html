@@ -145,8 +145,21 @@
         
         .film-content {
             display: flex;
+            flex-direction: column;
             gap: 0.75rem;
-            align-items: flex-start;
+        }
+
+        .film-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .film-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            padding-left: 4.25rem;
         }
         
         .film-number {
@@ -237,17 +250,17 @@
         
         .btn-delete {
             flex-shrink: 0;
-            padding: 0.75rem;
-            background: transparent;
+            padding: 0.5rem 0.75rem;
+            background: #374151;
             border: none;
             color: #f87171;
             cursor: pointer;
             border-radius: 0.5rem;
-            font-size: 1.25rem;
+            font-size: 1.125rem;
         }
         
         .btn-delete:hover {
-            background: #374151;
+            background: #4b5563;
             color: #fca5a5;
         }
 
@@ -256,7 +269,7 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem;
+            padding: 0.5rem 0.75rem;
             background: #374151;
             border-radius: 0.5rem;
             cursor: pointer;
@@ -268,8 +281,8 @@
         }
 
         .checkbox-container input[type="checkbox"] {
-            width: 1.5rem;
-            height: 1.5rem;
+            width: 1.25rem;
+            height: 1.25rem;
             cursor: pointer;
             accent-color: #16a34a;
         }
@@ -277,7 +290,6 @@
         .checkbox-label {
             font-size: 0.875rem;
             color: #9ca3af;
-            white-space: nowrap;
         }
 
         .checkbox-container.checked .checkbox-label {
@@ -584,13 +596,15 @@
                     return `
                         <div class="film-item ${isEmpty ? 'empty' : ''}">
                             <div class="film-content">
-                                <div class="film-number">${num}</div>
-                                <div class="film-title-container">
-                                    <div class="film-edit">
-                                        <input type="text" id="edit-input-${num}" value="${title}" placeholder="Wpisz tytuł filmu...">
-                                        <div class="film-buttons">
-                                            <button class="btn btn-save" onclick="saveEdit(${num})">Zapisz</button>
-                                            <button class="btn btn-cancel" onclick="cancelEdit()">Anuluj</button>
+                                <div class="film-row">
+                                    <div class="film-number">${num}</div>
+                                    <div class="film-title-container">
+                                        <div class="film-edit">
+                                            <input type="text" id="edit-input-${num}" value="${title}" placeholder="Wpisz tytuł filmu...">
+                                            <div class="film-buttons">
+                                                <button class="btn btn-save" onclick="saveEdit(${num})">Zapisz</button>
+                                                <button class="btn btn-cancel" onclick="cancelEdit()">Anuluj</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -602,19 +616,23 @@
                 return `
                     <div class="film-item ${isEmpty ? 'empty' : ''}">
                         <div class="film-content">
-                            <div class="film-number">${num}</div>
-                            <div class="film-title-container">
-                                <div class="film-title ${isEmpty ? 'empty' : ''}" onclick="startEdit(${num})">
-                                    ${isEmpty ? 'Kliknij aby dodać tytuł...' : title}
+                            <div class="film-row">
+                                <div class="film-number">${num}</div>
+                                <div class="film-title-container">
+                                    <div class="film-title ${isEmpty ? 'empty' : ''}" onclick="startEdit(${num})">
+                                        ${isEmpty ? 'Kliknij aby dodać tytuł...' : title}
+                                    </div>
                                 </div>
                             </div>
                             ${!isEmpty ? `
-                                <label class="checkbox-container ${firstCopy ? 'checked' : ''}" onclick="event.stopPropagation()">
-                                    <input type="checkbox" ${firstCopy ? 'checked' : ''} onchange="toggleFirstCopy(${num})">
-                                    <span class="checkbox-label">1× nagr.</span>
-                                </label>
+                                <div class="film-actions">
+                                    <label class="checkbox-container ${firstCopy ? 'checked' : ''}" onclick="event.stopPropagation()">
+                                        <input type="checkbox" ${firstCopy ? 'checked' : ''} onchange="toggleFirstCopy(${num})">
+                                        <span class="checkbox-label">1× nagrany</span>
+                                    </label>
+                                    <button class="btn-delete" onclick="deleteFilm(${num})">🗑️ Usuń</button>
+                                </div>
                             ` : ''}
-                            ${!isEmpty ? `<button class="btn-delete" onclick="deleteFilm(${num})">🗑️</button>` : ''}
                         </div>
                     </div>
                 `;

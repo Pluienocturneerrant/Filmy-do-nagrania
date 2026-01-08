@@ -687,7 +687,7 @@
         }
 
         function exportData() {
-            const dataStr = JSON.stringify(films, null, 2);
+            const dataStr = JSON.stringify(films);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -699,7 +699,7 @@
         }
 
         function sendEmail() {
-            const dataStr = JSON.stringify(films, null, 2);
+            const dataStr = JSON.stringify(films);
             const subject = encodeURIComponent('Baza filmów - synchronizacja');
             const body = encodeURIComponent(dataStr);
             const mailtoLink = `mailto:vihmasajuoorander@gmail.com?subject=${subject}&body=${body}`;
@@ -708,9 +708,9 @@
         }
 
         function copyToClipboard() {
-            const dataStr = JSON.stringify(films, null, 2);
+            const dataStr = JSON.stringify(films);
             navigator.clipboard.writeText(dataStr).then(() => {
-                showSuccess('Dane skopiowane do schowka!');
+                showSuccess('Dane skopiowane do schowka! (' + dataStr.length + ' znaków)');
             }).catch(err => {
                 showError('Błąd kopiowania: ' + err.message);
             });

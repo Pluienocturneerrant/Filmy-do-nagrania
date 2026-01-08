@@ -726,16 +726,29 @@
         }
 
         function importData() {
+            const data = document.getElementById('import-textarea').value.trim();
+            
+            if (!data) {
+                showError('Pole importu jest puste. Wklej dane przed importem.');
+                return;
+            }
+            
             try {
-                const data = document.getElementById('import-textarea').value;
                 const parsed = JSON.parse(data);
+                
+                // Sprawdź czy to prawidłowa struktura danych
+                if (typeof parsed !== 'object' || parsed === null) {
+                    throw new Error('Nieprawidłowa struktura danych');
+                }
+                
                 films = parsed;
                 saveToStorage();
                 hideImportModal();
                 render();
-                showSuccess('Dane zaimportowane!');
+                showSuccess('Dane zaimportowane pomyślnie!');
             } catch (err) {
-                showError('Błąd importu: nieprawidłowy format danych');
+                console.error('Import error:', err);
+                showError('Błąd importu: nieprawidłowy format danych. Upewnij się, że skopiowałeś pełne dane z emaila.');
             }
         }
 

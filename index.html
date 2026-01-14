@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baza filmów do nagrania</title>
+    <title>Filmy do nagrania</title>
     <style>
         * {
             margin: 0;
@@ -386,7 +386,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Baza filmów do nagrania</h1>
+        <h1>Filmy do nagrania</h1>
 
         <div class="sync-info">
             💾 Dane zapisują się automatycznie w przeglądarce. Użyj eksportu/importu do synchronizacji między urządzeniami.
@@ -590,9 +590,9 @@
                 const title = film.title || '';
                 const firstCopy = film.firstCopy || false;
                 const isEmpty = !title || title.trim() === '';
-                const isEditing = editingId === num;
+                const isCurrentlyEditing = editingId === num;
 
-                if (isEditing) {
+                if (isCurrentlyEditing) {
                     return `
                         <div class="film-item ${isEmpty ? 'empty' : ''}">
                             <div class="film-content">
@@ -638,7 +638,7 @@
                 `;
             }).join('');
 
-            if (isEditing) {
+            if (editingId !== null) {
                 const input = document.getElementById(`edit-input-${editingId}`);
                 if (input) input.focus();
             }
@@ -700,7 +700,7 @@
 
         function sendEmail() {
             const dataStr = JSON.stringify(films);
-            const subject = encodeURIComponent('Baza filmów - synchronizacja');
+            const subject = encodeURIComponent('Filmy do nagrania - synchronizacja');
             const body = encodeURIComponent(dataStr);
             const mailtoLink = `mailto:vihmasajuoorander@gmail.com?subject=${subject}&body=${body}`;
             window.location.href = mailtoLink;

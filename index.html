@@ -586,9 +586,10 @@
             noResultsEl.style.display = 'none';
 
             listEl.innerHTML = filtered.map(num => {
-                const film = films[num] || { title: '', firstCopy: false };
+                const film = films[num] || { title: '', firstCopy: false, secondCopy: false };
                 const title = film.title || '';
                 const firstCopy = film.firstCopy || false;
+                const secondCopy = film.secondCopy || false;
                 const isEmpty = !title || title.trim() === '';
                 const isCurrentlyEditing = editingId === num;
 
@@ -629,6 +630,10 @@
                                     <label class="checkbox-container ${firstCopy ? 'checked' : ''}" onclick="event.stopPropagation()">
                                         <input type="checkbox" ${firstCopy ? 'checked' : ''} onchange="toggleFirstCopy(${num})">
                                         <span class="checkbox-label">1× nagrany</span>
+                                    </label>
+                                    <label class="checkbox-container ${secondCopy ? 'checked' : ''}" onclick="event.stopPropagation()">
+                                        <input type="checkbox" ${secondCopy ? 'checked' : ''} onchange="toggleSecondCopy(${num})">
+                                        <span class="checkbox-label">2× nagrany</span>
                                     </label>
                                     <button class="btn-delete" onclick="deleteFilm(${num})">🗑️ Usuń</button>
                                 </div>

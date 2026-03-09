@@ -250,18 +250,38 @@
         
         .btn-delete {
             flex-shrink: 0;
-            padding: 0.5rem 0.75rem;
+            padding: 0.5rem 0.6rem;
             background: #374151;
             border: none;
             color: #f87171;
             cursor: pointer;
             border-radius: 0.5rem;
-            font-size: 1.125rem;
+            font-size: 1rem;
         }
         
         .btn-delete:hover {
             background: #4b5563;
             color: #fca5a5;
+        }
+
+        .btn-transfer {
+            flex-shrink: 0;
+            padding: 0.5rem 0.6rem;
+            background: #1d4ed8;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .btn-transfer:hover {
+            background: #1e40af;
+        }
+
+        .temp-number {
+            background: #7c3aed !important;
         }
 
         .checkbox-container {
@@ -440,8 +460,19 @@
 
     <script>
         const STORAGE_KEY = 'films-data-v1';
+        const WATCHLIST_KEY = 'watchlist-data-v1';
 
         const initialData = {
+            'temp-1': { title: "", firstCopy: false, secondCopy: false },
+            'temp-2': { title: "", firstCopy: false, secondCopy: false },
+            'temp-3': { title: "", firstCopy: false, secondCopy: false },
+            'temp-4': { title: "", firstCopy: false, secondCopy: false },
+            'temp-5': { title: "", firstCopy: false, secondCopy: false },
+            'temp-6': { title: "", firstCopy: false, secondCopy: false },
+            'temp-7': { title: "", firstCopy: false, secondCopy: false },
+            'temp-8': { title: "", firstCopy: false, secondCopy: false },
+            'temp-9': { title: "", firstCopy: false, secondCopy: false },
+            'temp-10': { title: "", firstCopy: false, secondCopy: false },
             18: { title: "", firstCopy: false, secondCopy: false },
             23: { title: "", firstCopy: false, secondCopy: false },
             28: { title: "", firstCopy: false, secondCopy: false },
@@ -490,10 +521,12 @@
         let editingId = null;
         let searchTerm = '';
 
+        const tempNumbers = ['temp-1', 'temp-2', 'temp-3', 'temp-4', 'temp-5', 'temp-6', 'temp-7', 'temp-8', 'temp-9', 'temp-10'];
         const allNumbers = [];
         for (let i = 18; i <= 223; i += 5) {
             allNumbers.push(i);
         }
+        const allKeys = [...tempNumbers, ...allNumbers];
 
         function loadData() {
             try {
@@ -559,8 +592,8 @@
                 const film = films[k];
                 return film && film.title && film.title.trim();
             }).length;
-            const empty = allNumbers.filter(num => {
-                const film = films[num];
+            const empty = allKeys.filter(key => {
+                const film = films[key];
                 return !film || !film.title || film.title.trim() === '';
             }).length;
             document.getElementById('recorded-count').textContent = recorded;
@@ -568,11 +601,12 @@
         }
 
         function getFilteredNumbers() {
-            return allNumbers.filter(num => {
-                const film = films[num];
+            return allKeys.filter(key => {
+                const film = films[key];
                 const title = film?.title || '';
+                const keyStr = typeof key === 'string' ? key : key.toString();
                 return title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       num.toString().includes(searchTerm);
+                       keyStr.includes(searchTerm);
             });
         }
 
@@ -591,25 +625,27 @@
             listEl.style.display = 'flex';
             noResultsEl.style.display = 'none';
 
-            listEl.innerHTML = filtered.map(num => {
-                const film = films[num] || { title: '', firstCopy: false, secondCopy: false };
+            listEl.innerHTML = filtered.map(key => {
+                const film = films[key] || { title: '', firstCopy: false, secondCopy: false };
                 const title = film.title || '';
                 const firstCopy = film.firstCopy || false;
                 const secondCopy = film.secondCopy || false;
                 const isEmpty = !title || title.trim() === '';
-                const isCurrentlyEditing = editingId === num;
+                const isCurrentlyEditing = editingId === key;
+                const isTemp = typeof key === 'string' && key.startsWith('temp-');
+                const displayNum = isTemp ? 'T' + key.split('-')[1] : key;
 
                 if (isCurrentlyEditing) {
                     return `
                         <div class="film-item ${isEmpty ? 'empty' : ''}">
                             <div class="film-content">
                                 <div class="film-row">
-                                    <div class="film-number">${num}</div>
+                                    <div class="film-number ${isTemp ? 'temp-number' : ''}">${displayNum}</div>
                                     <div class="film-title-container">
                                         <div class="film-edit">
-                                            <input type="text" id="edit-input-${num}" value="${title}" placeholder="Wpisz tytuł filmu...">
+                                            <input type="text" id="edit-input-${key}" value="${title}" placeholder="Wpisz tytuł filmu...">
                                             <div class="film-buttons">
-                                                <button class="btn btn-save" onclick="saveEdit(${num})">Zapisz</button>
+                                                <button class="btn btn-save" onclick="saveEdit('${key}')">Zapisz</button>
                                                 <button class="btn btn-cancel" onclick="cancelEdit()">Anuluj</button>
                                             </div>
                                         </div>
@@ -624,9 +660,9 @@
                     <div class="film-item ${isEmpty ? 'empty' : ''}">
                         <div class="film-content">
                             <div class="film-row">
-                                <div class="film-number">${num}</div>
+                                <div class="film-number ${isTemp ? 'temp-number' : ''}">${displayNum}</div>
                                 <div class="film-title-container">
-                                    <div class="film-title ${isEmpty ? 'empty' : ''}" onclick="startEdit(${num})">
+                                    <div class="film-title ${isEmpty ? 'empty' : ''}" onclick="startEdit('${key}')">
                                         ${isEmpty ? 'Kliknij aby dodać tytuł...' : title}
                                     </div>
                                 </div>
@@ -634,14 +670,16 @@
                             ${!isEmpty ? `
                                 <div class="film-actions">
                                     <label class="checkbox-container ${firstCopy ? 'checked' : ''}" onclick="event.stopPropagation()">
-                                        <input type="checkbox" ${firstCopy ? 'checked' : ''} onchange="toggleFirstCopy(${num})">
+                                        <input type="checkbox" ${firstCopy ? 'checked' : ''} onchange="toggleFirstCopy('${key}')">
                                         <span class="checkbox-label">1×</span>
                                     </label>
                                     <label class="checkbox-container ${secondCopy ? 'checked' : ''}" onclick="event.stopPropagation()">
-                                        <input type="checkbox" ${secondCopy ? 'checked' : ''} onchange="toggleSecondCopy(${num})">
+                                        <input type="checkbox" ${secondCopy ? 'checked' : ''} onchange="toggleSecondCopy('${key}')">
                                         <span class="checkbox-label">2×</span>
                                     </label>
-                                    <button class="btn-delete" onclick="deleteFilm(${num})">🗑️ Usuń</button>
+                                    <button class="btn-transfer" onclick="transferToMateusz('${key}')">→ M</button>
+                                    <button class="btn-transfer" onclick="transferToSypialnia('${key}')">→ S</button>
+                                    <button class="btn-delete" onclick="deleteFilm('${key}')">🗑️</button>
                                 </div>
                             ` : ''}
                         </div>
@@ -655,8 +693,8 @@
             }
         }
 
-        function startEdit(num) {
-            editingId = num;
+        function startEdit(key) {
+            editingId = key;
             render();
         }
 
@@ -665,11 +703,11 @@
             render();
         }
 
-        function saveEdit(num) {
-            const input = document.getElementById(`edit-input-${num}`);
+        function saveEdit(key) {
+            const input = document.getElementById(`edit-input-${key}`);
             if (input) {
-                const existingFilm = films[num] || { firstCopy: false, secondCopy: false };
-                films[num] = {
+                const existingFilm = films[key] || { firstCopy: false, secondCopy: false };
+                films[key] = {
                     title: input.value.trim(),
                     firstCopy: existingFilm.firstCopy || false,
                     secondCopy: existingFilm.secondCopy || false
@@ -681,27 +719,76 @@
             render();
         }
 
-        function toggleFirstCopy(num) {
-            if (!films[num]) {
-                films[num] = { title: '', firstCopy: false, secondCopy: false };
+        function toggleFirstCopy(key) {
+            if (!films[key]) {
+                films[key] = { title: '', firstCopy: false, secondCopy: false };
             }
-            films[num].firstCopy = !films[num].firstCopy;
+            films[key].firstCopy = !films[key].firstCopy;
             saveToStorage();
             render();
         }
 
-        function toggleSecondCopy(num) {
-            if (!films[num]) {
-                films[num] = { title: '', firstCopy: false, secondCopy: false };
+        function toggleSecondCopy(key) {
+            if (!films[key]) {
+                films[key] = { title: '', firstCopy: false, secondCopy: false };
             }
-            films[num].secondCopy = !films[num].secondCopy;
+            films[key].secondCopy = !films[key].secondCopy;
             saveToStorage();
             render();
         }
 
-        function deleteFilm(num) {
+        function transferToMateusz(key) {
+            transferFilm(key, 'mateusz');
+        }
+
+        function transferToSypialnia(key) {
+            transferFilm(key, 'sypialnia');
+        }
+
+        function transferFilm(key, destination) {
+            const film = films[key];
+            if (!film || !film.title || !film.title.trim()) return;
+
+            try {
+                // Pobierz bazę filmów do obejrzenia
+                const watchlistStr = localStorage.getItem(WATCHLIST_KEY);
+                if (!watchlistStr) {
+                    showError('Baza "Filmy do obejrzenia" nie istnieje. Otwórz ją najpierw w tej przeglądarce.');
+                    return;
+                }
+
+                const watchlist = JSON.parse(watchlistStr);
+                if (!watchlist[destination]) {
+                    watchlist[destination] = Array(50).fill("");
+                }
+
+                // Znajdź pierwsze wolne miejsce
+                const emptyIndex = watchlist[destination].findIndex(title => !title || title.trim() === '');
+                if (emptyIndex === -1) {
+                    showError(`Brak wolnych miejsc w ${destination === 'mateusz' ? 'Pokoju Mateusza' : 'Sypialni'}!`);
+                    return;
+                }
+
+                // Przenieś film
+                watchlist[destination][emptyIndex] = film.title;
+                localStorage.setItem(WATCHLIST_KEY, JSON.stringify(watchlist));
+
+                // Usuń z bazy do nagrania
+                films[key] = { title: '', firstCopy: false, secondCopy: false };
+                saveToStorage();
+
+                const destName = destination === 'mateusz' ? 'Pokój Mateusza' : 'Sypialnia';
+                showSuccess(`Przeniesiono "${film.title}" do: ${destName}`);
+                render();
+            } catch (err) {
+                console.error('Transfer error:', err);
+                showError('Błąd przenoszenia filmu. ' + err.message);
+            }
+        }
+
+        function deleteFilm(key) {
             if (confirm('Czy na pewno usunąć ten film?')) {
-                films[num] = { title: '', firstCopy: false, secondCopy: false };
+                films[key] = { title: '', firstCopy: false, secondCopy: false };
                 saveToStorage();
                 showSuccess('Usunięto!');
                 render();

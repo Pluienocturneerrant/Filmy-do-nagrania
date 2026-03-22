@@ -535,16 +535,19 @@
                     const parsed = JSON.parse(saved);
                     films = {};
                     for (let key in parsed) {
+                        // Konwertuj klucze liczbowe na liczby, stringowe zostaw jako stringi
+                        const normalizedKey = key.startsWith('temp-') ? key : parseInt(key);
+                        
                         if (typeof parsed[key] === 'string') {
-                            films[key] = { title: parsed[key], firstCopy: false, secondCopy: false };
+                            films[normalizedKey] = { title: parsed[key], firstCopy: false, secondCopy: false };
                         } else if (!parsed[key].hasOwnProperty('secondCopy')) {
-                            films[key] = { 
+                            films[normalizedKey] = { 
                                 title: parsed[key].title || '',
                                 firstCopy: parsed[key].firstCopy || false, 
                                 secondCopy: false 
                             };
                         } else {
-                            films[key] = parsed[key];
+                            films[normalizedKey] = parsed[key];
                         }
                     }
                     saveToStorage();
